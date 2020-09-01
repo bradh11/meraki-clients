@@ -31,7 +31,7 @@ def main():
     for org in organizations:
         org_id = org['id']
         
-        print(f"status: checking {org['name']} - {org['id']}}")
+        print(f"status: checking {org['name']} - {org['id']}")
         if org['id'] == ORG_ID:
             # Get list of networks in organization
             print(f'\nAnalyzing organization {org["name"]}:')
