@@ -48,7 +48,7 @@ def main():
                 continue
             
             # Create local folder
-            todays_date = f'{datetime.now():%Y-%m-%d}'
+            todays_date = f'{datetime.now():%Y-%m-%d_%H_%M}'
             folder_name = f'Org {org_id} clients {todays_date}'
             if folder_name not in os.listdir():
                 os.mkdir(folder_name)
