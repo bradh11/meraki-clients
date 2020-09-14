@@ -12,6 +12,16 @@ with open("config.yaml", "r") as f:
     API_KEY = config.get("API_KEY")
     ORG_ID = config.get("ORG_ID")
 
+# Instantiate a Meraki dashboard API session
+dashboard = meraki.DashboardAPI(
+    api_key=API_KEY,
+    # base_url='https://api-mp.meraki.com/api/v1/',
+    output_log=True,
+    log_file_prefix=os.path.basename(__file__)[:-3],
+    log_path='logs',
+    print_console=False
+)
+
 
 def write_csv(org, data):
     # Write to file
@@ -26,17 +36,37 @@ def write_csv(org, data):
     output_file.close()
     print(f'  - found {len(data)}')
 
-def main():
-    # Instantiate a Meraki dashboard API session
-    dashboard = meraki.DashboardAPI(
-        api_key=API_KEY,
-        # base_url='https://api-mp.meraki.com/api/v1/',
-        output_log=True,
-        log_file_prefix=os.path.basename(__file__)[:-3],
-        log_path='logs',
-        print_console=False
-    )
 
+def update_ports(switch):
+    ports = dashboard.switch.getDeviceSwitchPorts(switch['serial'])
+    all_port_responses = []
+    
+    for port in ports:
+        if port["name"] == "PRINTER":
+            print(f"status: PRINTER found on port {port['portId']} -- updating...")
+            response = dashboard.switch.updateDeviceSwitchPort(
+                serial=switch['serial'],
+                portId=port['portId'],
+                accessPolicyType = "Open",
+                linkNegotiation="100 Megabit full duplex (forced)",
+                type = "access"
+                )
+            
+            response_details = {}
+            response_details["switch_name"] = switch["name"]
+            response_details["switch_serial"] = switch["serial"]
+            response_details["switch_model"] = switch["model"]
+            response_details["switch_lanIp"] = switch["lanIp"]
+            for name, details in response.items():
+                response_details[name] = details
+            
+            all_port_responses.append(response_details)
+            
+    return all_port_responses
+            
+
+
+def main():
     # create a master list
     data = []
 
@@ -67,29 +97,10 @@ def main():
             # switches = [{"serial": "Q2HP-YYCL-JBVP"}]
 
             for switch in switches:
-                print(f"status: found device name:{switch['name']} - serial:{switch['serial']}")
-                ports = dashboard.switch.getDeviceSwitchPorts(switch['serial'])
-
-                for port in ports:
-                    if port["name"] == "PRINTER":
-                        print(f"status: PRINTER found on port {port['portId']} -- updating...")
-                        response = dashboard.switch.updateDeviceSwitchPort(
-                            serial=switch['serial'],
-                            portId=port['portId'],
-                            accessPolicyType = "Open",
-                            linkNegotiation="100 Megabit full duplex (forced)",
-                            type = "access"
-                            )
-                        
-                        response_details = {}
-                        response_details["switch_name"] = switch["name"]
-                        response_details["switch_serial"] = switch["serial"]
-                        response_details["switch_model"] = switch["model"]
-                        response_details["switch_lanIp"] = switch["lanIp"]
-                        for name, details in response.items():
-                            response_details[name] = details
-                        print(response_details)
-                        data.append(response_details)
+                print(f"status: processing device name:{switch['name']} - serial:{switch['serial']}")
+                response_details = update_ports(switch)
+                for response in response_details:
+                    data.append(response)
         
             write_csv(org=ORG_ID, data=data)
 
