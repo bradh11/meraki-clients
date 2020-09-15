@@ -47,13 +47,10 @@ def update_ports(switch):
             port["accessPolicyType"] = "Open"
             port["linkNegotiation"] = "100 Megabit full duplex (forced)"
             port["type"] = "access"
+
             response = dashboard.switch.updateDeviceSwitchPort(
                 serial=switch['serial'],
-                **port
-                # portId=port['portId'],
-                # accessPolicyType = "Open",
-                # linkNegotiation="100 Megabit full duplex (forced)",
-                # type = "access"
+                **port # all other port parameters including those updated on the lines above
                 )
             
             response_details = {}
