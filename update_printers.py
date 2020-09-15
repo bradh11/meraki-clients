@@ -44,12 +44,16 @@ def update_ports(switch):
     for port in ports:
         if port["name"] == "PRINTER":
             print(f"status: PRINTER found on port {port['portId']} -- updating...")
+            port["accessPolicyType"] = "Open"
+            port["linkNegotiation"] = "100 Megabit full duplex (forced)"
+            port["type"] = "access"
             response = dashboard.switch.updateDeviceSwitchPort(
                 serial=switch['serial'],
-                portId=port['portId'],
-                accessPolicyType = "Open",
-                linkNegotiation="100 Megabit full duplex (forced)",
-                type = "access"
+                **port
+                # portId=port['portId'],
+                # accessPolicyType = "Open",
+                # linkNegotiation="100 Megabit full duplex (forced)",
+                # type = "access"
                 )
             
             response_details = {}
