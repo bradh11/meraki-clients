@@ -98,7 +98,7 @@ def main():
     for org in organizations:
         org_id = org['id']
         
-        print(f"status: checking {org.get('name')} - {org['id']}")
+        print(f"status: found {org.get('name')} - {org['id']}")
         if org['id'] == ORG_ID:
             # Get list of devices in organization
             print(f'\nstatus: analyzing organization {org["name"]}:')
