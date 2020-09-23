@@ -31,6 +31,8 @@ def get_mode():
     if arg == "PROD":
         mode = "PROD"
         return mode
+    else:
+        mode = "DEV"
 
 def write_csv(org, data):
     # Write to file
