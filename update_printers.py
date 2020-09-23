@@ -1,12 +1,11 @@
 import csv
+import sys
 from datetime import datetime
 import os
 import yaml
 import meraki
 
-# Either input your API key below by uncommenting line 10 and changing line 16 to api_key=API_KEY,
-# or set an environment variable (preferred) to define your API key. The former is insecure and not recommended.
-# For example, in Linux/macOS:  export MERAKI_DASHBOARD_API_KEY=093b24e85df15a3e66f1fc359f4c48493eaa1b73
+# Read in global configuration from config.yaml file
 with open("config.yaml", "r") as f:
     config = yaml.safe_load(f.read())
     API_KEY = config.get("API_KEY")
@@ -22,11 +21,22 @@ dashboard = meraki.DashboardAPI(
     print_console=False
 )
 
+def get_mode():
+    try:
+        arg = sys.argv[1]
+    except Exception as e:
+        print(f"status: mode not specified.  Defaulting to `DEV` mode  ")
+        mode = "DEV"
+        return mode
+    if arg == "PROD":
+        mode = "PROD"
+        return mode
 
 def write_csv(org, data):
     # Write to file
+    MODE = get_mode()
     todays_date = f'{datetime.now():%Y-%m-%d_%H_%M}'
-    file_name = f"{org}-switchports-{todays_date}.csv"
+    file_name = f"{org}-switchports-{todays_date}-{MODE}.csv"
     output_file = open(f'{file_name}', mode='w', newline='\n')
     field_names = data[0].keys()
     csv_writer = csv.DictWriter(output_file, field_names, delimiter=',', quotechar='"',
@@ -34,30 +44,40 @@ def write_csv(org, data):
     csv_writer.writeheader()
     csv_writer.writerows(data)
     output_file.close()
-    print(f'  - found {len(data)}')
+    print(f'status: found {len(data)} ports matching `PRINTER`')
+    print(f"status: writing file {file_name}")
 
 
 def update_ports(switch):
+    MODE = get_mode()
     ports = dashboard.switch.getDeviceSwitchPorts(switch['serial'])
     all_port_responses = []
     
     for port in ports:
         if port["name"] == "PRINTER":
-            print(f"status: PRINTER found on port {port['portId']} -- updating...")
+            print(f"status: PRINTER found on port {port['portId']} -- reading...")
+
+            # desired config changes to ports
             port["accessPolicyType"] = "Open"
             port["linkNegotiation"] = "100 Megabit full duplex (forced)"
             port["type"] = "access"
 
-            response = dashboard.switch.updateDeviceSwitchPort(
-                serial=switch['serial'],
-                **port # all other port parameters including those updated on the lines above
-                )
+            if MODE == "PROD":
+                response = dashboard.switch.updateDeviceSwitchPort(
+                    serial=switch['serial'],
+                    **port # all other port parameters including those updated on the lines above
+                    )
+                print(f"status: PRINTER found on port {port['portId']} -- updating...")
+            else:
+                # document existing port configurations
+                response = port
             
             response_details = {}
             response_details["switch_name"] = switch["name"]
             response_details["switch_serial"] = switch["serial"]
             response_details["switch_model"] = switch["model"]
             response_details["switch_lanIp"] = switch["lanIp"]
+
             for name, details in response.items():
                 response_details[name] = details
             
@@ -78,10 +98,10 @@ def main():
     for org in organizations:
         org_id = org['id']
         
-        print(f"status: checking {org['name']} - {org['id']}")
+        print(f"status: checking {org.get('name')} - {org['id']}")
         if org['id'] == ORG_ID:
             # Get list of devices in organization
-            print(f'\nAnalyzing organization {org["name"]}:')
+            print(f'\nstatus: analyzing organization {org["name"]}:')
             try:
                 devices = dashboard.organizations.getOrganizationDevices(organizationId=ORG_ID)
             except meraki.APIError as e:
