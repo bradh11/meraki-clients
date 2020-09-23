@@ -22,5 +22,6 @@ This script will update all ports with the name `PRINTER` and set the following 
 1. copy `config.yaml.example` to `config.yaml`
 2. update the config file to include your Meraki API Key.  if you do not have one, it might need to be enabled for your account via the Dashboard under your user profile.  Please keep this API key safe and never allow anyone else access to it.  If you believe your key may have been compromised, please revoke it immediately and generate a new one.
 3. get your ORG ID and update it in the config file.  This will limit the scope of your API calls so they do not apply to other Organizations that you might have access to.
-4. run the update printers script:  `python update_printers.py`
-5. once the script is done, a report of all changes applied will be reported in a csv file which is date timestamped.
+4. run the update printers script in `DEV mode`:  `python update_printers.py DEV`
+5. if the DEV mode output file meets expectations on which ports will be updated move the script to `PROD mode` by running the command `python update_printers.py PROD`
+6. once the script is done, a report of all changes applied will be reported in a csv file which is date timestamped.
