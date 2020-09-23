@@ -26,13 +26,11 @@ def get_mode():
         arg = sys.argv[1]
     except Exception as e:
         print(f"status: mode not specified.  Defaulting to `DEV` mode  ")
-        mode = "DEV"
-        return mode
+        return "DEV"
     if arg == "PROD":
-        mode = "PROD"
-        return mode
+        return "PROD"
     else:
-        mode = "DEV"
+        return "DEV"
 
 def write_csv(org, data):
     # Write to file
