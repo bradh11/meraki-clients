@@ -97,7 +97,7 @@ def main():
                 if file_name in os.listdir(folder_name):
                     with open(f'{folder_name}/{file_name}') as input_file:
                         csv_reader = csv.DictReader(input_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-                        next(csv_reader)
+                        # next(csv_reader)
                         for row in csv_reader:
                             row['Network Name'] = net['name']
                             row['Network ID'] = net['id']
